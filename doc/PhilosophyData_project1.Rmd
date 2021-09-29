@@ -1,0 +1,426 @@
+---
+title: "An Analysis on Texts of Feminism Philosophers"
+author: "Yucen Wang"
+date: "09/29/2021"
+output:
+  html_notebook: default
+  html_document: default
+---
+
+# 1. Introduction
+
+  When mentioning the word "feminism", people always come up with the stereotype of aggressiveness and anxiousness. However, I notice that feminists care more about woman as an individual, and fight for the rights for minority groups. I wonder where do those stereotypes come from. Philosophers who study feminism might be a good source, so I will analyze their articles in this report.
+
+  Do feminism philosophers show more negative attitudes in their articles? Do they always show negative sentiment or do their attitude change over time? Also, what topics do they care about most? Their might be connections between their attitudes and their topics. I will analyze their attitudes by making sentiment tests and by making word clouds.
+
+  The data set can be accessed from [Philosophy data](https://www.kaggle.com/kouroshalizadeh/history-of-philosophy).
+
+  More information can be found [here](http://philosophydata.com/index.html).
+
+
+  
+# 2. Analysis part
+
+  Since the data sets are too large, we can take 10000 random samples from each school. Stoicism only has 2535 rows, so we will take all of them. We will specifically analyze feminism data, so all rows from feminism data will be used.
+  
+  Here is a table for each school and it's publication number.
+
+```{r, echo=FALSE, message=FALSE,include = FALSE}
+library(reshape2)
+library(dplyr)
+library(SentimentAnalysis)
+library(ggplot2)
+library(wordcloud)
+library(RColorBrewer)
+library(tm)
+library(Rcpp)
+library(tidytext)
+library(tidyr)
+library(tibble)
+data <- read.csv("../data/philosophy_data.csv")
+
+
+```
+
+```{r, echo=FALSE, message=FALSE}
+# Check data for each school, we have 13 schools in total.
+school_13 <- data %>% group_by(school) %>%
+  summarise(articles_num = n()) 
+school_13 
+# Separate the whole data sets into 13 subsets by schools.
+analytic_df <- data[data$school=="analytic",]
+aristotle_df <- data[data$school=="aristotle",]
+capitalism_df <- data[data$school=="capitalism",]
+communism_df <- data[data$school=="communism",]
+continental_df <- data[data$school=="continental",]
+empiricism_df <- data[data$school=="empiricism",]
+feminism_df <- data[data$school=="feminism",]
+german_idealism_df <- data[data$school=="german_idealism",]
+nietzsche_df <- data[data$school=="nietzsche",]
+phenomenology_df <- data[data$school=="phenomenology",]
+plato_df <- data[data$school=="plato",]
+rationalism_df <- data[data$school=="rationalism",]
+stoicism_df <- data[data$school=="stoicism",]
+ 
+```
+
+```{r, echo=FALSE}
+
+# Random sample generator function
+random_sam <- function(school_df){
+  i <- sample(1:nrow(school_df), 10000, replace=FALSE)
+  return (school_df[i,])
+}
+
+# Get random samples
+set.seed(1234)
+analytic_sam <- random_sam(analytic_df)
+aristotle_sam <- random_sam(aristotle_df)
+capitalism_sam <- random_sam(capitalism_df)
+communism_sam <- random_sam(communism_df)
+continental_sam <- random_sam(continental_df)
+empiricism_sam <- random_sam(empiricism_df)
+german_idealism_sam <- random_sam(german_idealism_df)
+nietzsche_sam <- random_sam(nietzsche_df)
+phenomenology_sam <- random_sam(phenomenology_df)
+plato_sam <- random_sam(plato_df)
+rationalism_sam <- random_sam(rationalism_df)
+
+```
+
+  
+  
+## 2.i). Do feminists show more irritation and aggressiveness in their words?
+
+  This question can be analyzed through two aspects: First, we can check the proportion of negative sentiments in feminism philosophers' texts. Second, we can compare the feminine proportion with other schools' negative proportion. 
+  
+  Within the feminism text data, we can make sentiment tests on the sentences. Then, through the sentiment tests, we count the proportion of positive, neutral and negative sentences. The results are shown in the pie chart below.
+  
+
+```{r, echo=FALSE}
+# Extract each school's sentiment according to the QDAP dictionary
+feminism_sent <- analyzeSentiment(feminism_df$sentence_str)$SentimentQDAP
+feminism_result <- convertToDirection(feminism_sent)
+```
+
+
+```{r, echo=FALSE}
+# Define sent_count function to calculate the proportion of positive, negative and neutral words
+sent_count <- function(school_result){
+  num_pos <- 0
+  num_neu <- 0
+  num_neg <- 0
+  for(i in 1:length(school_result)){
+    if(is.na(school_result[i]) == FALSE){
+      if(school_result[i] == "positive"){
+      num_pos <- num_pos+1
+    }
+    else if(school_result[i] == "neutral"){
+      num_neu <- num_neu+1
+    }
+    else{num_neg <- num_neg+1}
+    }
+    
+  }
+  count_df <- data.frame(positive=num_pos, neutral=num_neu, negative=num_neg )
+  return(count_df)
+}
+```
+
+
+```{r, echo=FALSE}
+# Pie chart for sentimental analysis of feminism 
+feminism_ct <- sent_count(feminism_result)
+pie_labels <- paste0(colnames(feminism_ct), " = ", round(100 * feminism_ct/sum(feminism_ct), 2), "%")
+
+pie(c(feminism_ct$pos,feminism_ct$neu,feminism_ct$neg),labels=pie_labels, main="Pie Chart for Feminism")
+```
+
+  As shown in the pie chart, we can see that the proportion of negative sentiments is not the largest. Negative sentiments take 31.61% of the texts. However, 45.49% of the sentences show positive sentiments.
+  
+
+```{r, echo=FALSE}
+# analytic
+analytic_sent <- analyzeSentiment(analytic_sam$sentence_str)$SentimentQDAP
+analytic_result <- convertToDirection(analytic_sent)
+# aristotle
+aristotle_sent <- analyzeSentiment(aristotle_sam$sentence_str)$SentimentQDAP
+aristotle_result <- convertToDirection(aristotle_sent)
+# capitalism
+capitalism_sent <- analyzeSentiment(capitalism_sam$sentence_str)$SentimentQDAP
+capitalism_result <- convertToDirection(capitalism_sent)
+# communism
+communism_sent <- analyzeSentiment(communism_sam$sentence_str)$SentimentQDAP
+communism_result <- convertToDirection(communism_sent)
+# continental
+continental_sent <- analyzeSentiment(continental_sam$sentence_str)$SentimentQDAP
+continental_result <- convertToDirection(continental_sent)
+# empiricism
+empiricism_sent <- analyzeSentiment(empiricism_sam$sentence_str)$SentimentQDAP
+empiricism_result <- convertToDirection(empiricism_sent)
+# german_idealism
+german_idealism_sent <- analyzeSentiment(german_idealism_sam$sentence_str)$SentimentQDAP
+german_idealism_result <- convertToDirection(german_idealism_sent)
+# nietzsche
+nietzsche_sent <- analyzeSentiment(nietzsche_sam$sentence_str)$SentimentQDAP
+nietzsche_result <- convertToDirection(nietzsche_sent)
+# phenomenology
+phenomenology_sent <- analyzeSentiment(phenomenology_sam$sentence_str)$SentimentQDAP
+phenomenology_result <- convertToDirection(phenomenology_sent)
+# plato
+plato_sent <- analyzeSentiment(plato_sam$sentence_str)$SentimentQDAP
+plato_result <- convertToDirection(plato_sent)
+# rationalism
+rationalism_sent <- analyzeSentiment(rationalism_sam$sentence_str)$SentimentQDAP
+rationalism_result <- convertToDirection(rationalism_sent)
+# stoicism
+stoicism_sent <- analyzeSentiment(stoicism_df$sentence_str)$SentimentQDAP
+stoicism_result <- convertToDirection(stoicism_sent)
+
+```
+
+
+
+```{r, echo=FALSE}
+# Find other schools' proportion.
+analytic_ct <- sent_count(analytic_result)
+aristotle_ct <- sent_count(aristotle_result)
+capitalism_ct <- sent_count(capitalism_result)
+communism_ct <- sent_count(communism_result)
+continental_ct <- sent_count(continental_result)
+empiricism_ct <- sent_count(empiricism_result)
+german_idealism_ct <- sent_count(german_idealism_result)
+nietzsche_ct <- sent_count(nietzsche_result)
+phenomenology_ct <- sent_count(phenomenology_result)
+plato_ct <- sent_count(plato_result)
+rationalism_ct <- sent_count(rationalism_result)
+stoicism_ct <- sent_count(stoicism_result)
+
+```
+
+
+```{r, echo=FALSE}
+# Create count data frame and transform to appropriate format.
+school_sent_df <- rbind(analytic_ct,aristotle_ct,capitalism_ct,communism_ct,continental_ct,empiricism_ct,german_idealism_ct,feminism_ct,nietzsche_ct,phenomenology_ct,plato_ct,rationalism_ct,stoicism_ct)
+school_sent_df$School <- c("analytic","aristotle","capitalism","communism","continental","empiricism","german_idealism","feminism","nietzsche","phenomenology","plato","rationalism","stoicism")
+school_sent_df <- school_sent_df %>% pivot_longer(cols = !School, names_to = "Sentiment", values_to = "Count") 
+school_sent_df$Total <- ifelse(school_sent_df$School=="stoicism",2535,
+                               ifelse(school_sent_df$School=="feminism", 18635, 10000))
+school_sent_df$Percent <- paste(round((school_sent_df$Count/school_sent_df$Total)*100, digits=2), "%", sep="")
+
+```
+
+  We then calculate the proportion of sentiments in other 12 schools. We can create a line chart to compare the proportion of these sentiments.
+  
+```{r, echo=FALSE}
+# Make a line chart for comparing proportion of sentiments
+ggplot(data=school_sent_df, aes(x=School, y=Percent,group=Sentiment, color=Sentiment)) +
+  geom_line()+
+  geom_point()+
+  labs(title = "Feminism sentiment proportion for each school's article",
+       x = "Time")+
+  theme(axis.text.x = element_text(angle = 45, vjust = 0.8))
+```
+
+  From the chart we can see that, feminism has a large proportion of negative sentiments comparing to other schools' texts. However, its proportion is not the largest. Continental philosophy has larger proportion of negative sentiments.
+  
+  Thus, we can say that the feminism philosophy do have a relative large proportion of negative sentiments comparing to other schools' articles, but within its' own texts, positive sentiments have a larger proportion.
+
+
+## 2.ii). How do feminism philosophers' attitudes change over time?
+
+  The data provide articles that are published in 1792, 1949 and 1981, so we analyze the texts in these three years. Again, we make sentiment analysis on data by time. 
+  
+  Here is a table for publication date and number of publications in that year.
+  
+```{r, echo=FALSE, message=FALSE}
+# Check for the publication date of articles
+sum_fem_yr <- feminism_df %>% group_by(original_publication_date) %>%
+  summarise(publication_n = n())
+sum_fem_yr
+#  Get subsets for each year
+pub_1792 <- feminism_df[feminism_df$original_publication_date=="1792",]
+pub_1949 <- feminism_df[feminism_df$original_publication_date=="1949",]
+pub_1981 <- feminism_df[feminism_df$original_publication_date=="1981",]
+
+```
+
+
+```{r, echo=FALSE}
+# Sentimental Analysis by years
+sent_1792 <- analyzeSentiment(pub_1792$sentence_str)$SentimentQDAP
+result_1792 <- convertToDirection(sent_1792)
+sent_1949 <- analyzeSentiment(pub_1949$sentence_str)$SentimentQDAP
+result_1949 <- convertToDirection(sent_1949)
+sent_1981 <- analyzeSentiment(pub_1981$sentence_str)$SentimentQDAP
+result_1981 <- convertToDirection(sent_1981)
+
+# Count sentiments for each year
+ct_1792 <- sent_count(result_1792)
+ct_1949 <- sent_count(result_1949)
+ct_1981 <- sent_count(result_1981)
+```
+
+
+```{r, echo=FALSE}
+# Create Count dataframe and transform its columns and rows.
+time_sent_df <- rbind(ct_1792,ct_1949,ct_1981)
+time_sent_df$time <- c("1792","1949","1981")
+time_sent_df <- time_sent_df %>% pivot_longer(cols = !time, names_to = "Sentiment",
+values_to = "Count") 
+time_sent_df$Total <- ifelse(time_sent_df$time==1792,2559,
+                             ifelse(time_sent_df$time==1949,13015,3058))
+time_sent_df$Percent <- paste(round((time_sent_df$Count/time_sent_df$Total)*100, digits=2), "%", sep="")
+
+
+```
+
+
+  A bar plot can show the sentiment counts in each year.
+
+```{r, echo=FALSE}
+ggplot(data=time_sent_df, aes(x=time, y=Count, fill=Sentiment)) +
+  geom_bar(stat="identity")+
+  labs(title = "Feminism sentiment counts for each year's article",
+       x = "Year")
+```
+
+  The bar plot shows the counts of each sentiments in each year. According to the bar plot, the article published in year 1949 has most sentences and a large proportion of them are negative sentiments. It seems like positive sentiments has the largest proportion in 1792. We can verify that in other plots.
+
+  A proportion line chart can directly compare the proportions.
+```{r, echo=FALSE}
+ggplot(data=time_sent_df, aes(x=time, y=Percent,group=Sentiment, color=Sentiment)) +
+  geom_line()+
+  geom_point()+
+  labs(title = "Feminism sentiment proportion for each year's article",
+       x = "Year")
+```
+
+  The line chart shows that the proportion of positive sentiments has largest proportion in 1792, but then decreases through time. Conversely, proportion of negative sentiments increases from 1792 to 1981.
+  
+  Hence, from the two plots above, we can see that the proportion of negative sentiments increases through time.  
+
+## 2.iii). What topics do feminists care about?
+  To find out the topics feminism philosophers care, we can use word cloud to calculate the words that appeared most in their articles.
+  
+  Here is a word cloud for articles from all feminism philosophers.
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+# Clean text
+corp <- Corpus(VectorSource(feminism_df$sentence_str))
+corp <- tm_map(corp, removePunctuation)
+corp <- tm_map(corp, content_transformer(tolower))
+corp <- tm_map(corp, removeNumbers)
+corp <- tm_map(corp, removeWords, stopwords("english"))
+corp <- tm_map(corp, stripWhitespace)
+tdm <- TermDocumentMatrix(corp)
+tdm_tidy <- tidy(tdm)
+tdm_overall <- summarise(group_by(tdm_tidy, term), sum(count))
+
+# Create Word Cloud
+wordcloud(words = tdm_overall$term, freq = tdm_overall$`sum(count)`, scale=c(5,0.5),
+          max.words=49,
+          min.freq=1,
+          random.order=FALSE,
+          rot.per=0.3,
+          use.r.layout=T,
+          random.color=FALSE,
+          colors=brewer.pal(9,"Blues"))
+
+```
+
+  This word cloud shows that the most frequent words are "woman", "women", "man","will", "life" and "love". It seems like these words are all related to sex and relationships.
+  
+  We can also check the word cloud for each author. We have three philosophers in total: Beauvoir, Davis and Wollstonecraft. The table below shows three philosophers amd their publication number.
+  
+  
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+# Group the data by authors
+feminism_df %>% group_by(author) %>%
+  summarise(author_n = n())
+# Create word cloud for Beauvoir
+beauvoir_df <- feminism_df[feminism_df$author=="Beauvoir",]
+b_corp <- Corpus(VectorSource(beauvoir_df$sentence_str))
+b_corp <- tm_map(b_corp, removePunctuation)
+b_corp <- tm_map(b_corp, content_transformer(tolower))
+b_corp <- tm_map(b_corp, removeNumbers)
+b_corp <- tm_map(b_corp, removeWords, stopwords("english"))
+b_corp <- tm_map(b_corp, stripWhitespace)
+b_tdm <- TermDocumentMatrix(b_corp)
+b_tdm_tidy <- tidy(b_tdm)
+b_tdm_overall <- summarise(group_by(b_tdm_tidy, term), sum(count))
+```
+
+  Beauvoir's word cloud:
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+# Create Word Cloud
+wordcloud(words = b_tdm_overall$term, freq = b_tdm_overall$`sum(count)`, scale=c(5,0.5),
+          max.words=75,
+          min.freq=1,
+          random.order=FALSE,
+          rot.per=0.3,
+          use.r.layout=T,
+          random.color=FALSE,
+          colors=brewer.pal(9,"Reds"))
+```
+
+  Beauvoir's word cloud looks similar to the previous one. She cares about "woman", "man", "will", "life" and "love". The word "woman" has a higher frequency than "women". Word "girl" has higher frequency than "girls". My guess is that Beauvoir may talk more about woman as an individual rather than as a group.
+
+  Davis's word cloud:
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+davis_df <- feminism_df[feminism_df$author=="Davis",]
+d_corp <- Corpus(VectorSource(davis_df$sentence_str))
+d_corp <- tm_map(d_corp, removePunctuation)
+d_corp <- tm_map(d_corp, content_transformer(tolower))
+d_corp <- tm_map(d_corp, removeNumbers)
+d_corp <- tm_map(d_corp, removeWords, stopwords("english"))
+d_corp <- tm_map(d_corp, stripWhitespace)
+d_tdm <- TermDocumentMatrix(d_corp)
+d_tdm_tidy <- tidy(d_tdm)
+d_tdm_overall <- summarise(group_by(d_tdm_tidy, term), sum(count))
+
+# Create Word Cloud
+wordcloud(words = d_tdm_overall$term, freq = d_tdm_overall$`sum(count)`, scale=c(5,0.5),
+          max.words=75,
+          min.freq=1,
+          random.order=FALSE,
+          rot.per=0.3,
+          use.r.layout=T,
+          random.color=FALSE,
+          colors=brewer.pal(9,"Reds"))
+```
+
+  Davis' word cloud shows that "women", "black", "white", "slavery", "labor" and "rape" has higher frequency. She might focus more on race, ethnicity and slavery. Her articles talk about women who suffered from slavery, racism and unequal rights.
+
+  Wollstonecraft's word cloud:
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+wollstonecraft_df <- feminism_df[feminism_df$author=="Wollstonecraft",]
+w_corp <- Corpus(VectorSource(wollstonecraft_df$sentence_str))
+w_corp <- tm_map(w_corp, removePunctuation)
+w_corp <- tm_map(w_corp, content_transformer(tolower))
+w_corp <- tm_map(w_corp, removeNumbers)
+w_corp <- tm_map(w_corp, removeWords, stopwords("english"))
+w_corp <- tm_map(w_corp, stripWhitespace)
+w_tdm <- TermDocumentMatrix(w_corp)
+w_tdm_tidy <- tidy(w_tdm)
+w_tdm_overall <- summarise(group_by(w_tdm_tidy, term), sum(count))
+
+# Create Word Cloud
+wordcloud(words = w_tdm_overall$term, freq = w_tdm_overall$`sum(count)`, scale=c(5,0.5),
+          max.words=45,
+          min.freq=1,
+          random.order=FALSE,
+          rot.per=0.3,
+          use.r.layout=T,
+          random.color=FALSE,
+          colors=brewer.pal(9,"Reds"))
+```
+
+
+  Compared to previous word clouds, Wollstonecraft does not have an obviously high frequency on a single word. The texts' frequencies appeared more evenly. The word "reason" occur for the first time. It seems like she discusses her topic through a broader perspective. She talks about the reasons and the nature of sex. 
+
+# 3. Conclusions
+
+  According to the previous analysis, we can conclude that feminism philosophers do have a large proportion of negative sentiments in their articles compared with other schools' philosophers. However, within feminism school's articles, the proportion of positive sentiments is the largest. The proportion of positive sentiments decreases over time, but still larger than that of the negative sentiments.
+  
+  The word "women" has highest frequency in all three philosophers' articles. Other high frequency words are: "man", "life", "will", "love", "black" and "reason.". Feminism philosophers care about woman as an individual, her rights, her power and her suffrages.
