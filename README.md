@@ -12,7 +12,7 @@ Term: Fall 2021
 + Projec title: An Analysis on Texts of Feminism Philosophers
 + This project is conducted by Yucen Wang
 
-+ Project summary: This report explores whether feminism philosophers include a large portion of negative sentiments in their articles. The report also looks for the topics that those philosophers care about. I took the [Philosophy data](https://www.kaggle.com/kouroshalizadeh/history-of-philosophy) snd generated random samples to analyze. I applied sentimental analysis and word cloud in this project.
++ Project summary: This report explores whether feminism philosophers include a large portion of negative sentiments in their articles. The report also looks for the topics that those philosophers care about. I took the [Philosophy data](https://www.kaggle.com/kouroshalizadeh/history-of-philosophy) and generated random samples to analyze. Sentimental analysis and word clouds are applied in this project.
 
 + Three questions will be answered in this report are:
 
